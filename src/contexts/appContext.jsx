@@ -41,7 +41,7 @@ export const AppProvider = ({ children }) => {
                         owned.push(i);
                     }
                 } catch (e) {
-                    // Skip if token doesn't exist yet
+                   
                     continue;
                 }
             }

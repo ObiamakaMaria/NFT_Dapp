@@ -27,16 +27,16 @@ const useMintToken = () => {
         );
 
         try {
-            // Start the minting process
+           
             const tx = await contract.mint({ value: mintPrice });
             
-            // Wait for transaction confirmation
+           
             const receipt = await tx.wait();
             if (receipt.status === 0) {
                 throw new Error("Transaction failed");
             }
 
-            // Find the Minted event in the receipt
+           
             const mintedEvent = receipt.logs
                 .map(log => {
                     try {
@@ -49,11 +49,11 @@ const useMintToken = () => {
 
             if (mintedEvent) {
                 const [to, tokenId] = mintedEvent.args;
-                // Only update if the token was minted to the current user
+              
                 if (to.toLowerCase() === address.toLowerCase()) {
-                    // Update next token ID
+                   
                     setNextTokenId(tokenId + 1n);
-                    // Refresh owned tokens list
+                  
                     await refreshOwnedTokens();
                 }
             }
