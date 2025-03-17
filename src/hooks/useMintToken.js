@@ -11,7 +11,8 @@ const useMintToken = () => {
     const { address } = useAccount();
     const chainId = useChainId();
     const wagmiConfig = useConfig();
-    const { nextTokenId, maxSupply, mintPrice } = useAppContext();
+    const { nextTokenId, maxSupply, mintPrice, setNextTokenId, refreshOwnedTokens } = useAppContext();
+
     return useCallback(async () => {
         if (!address) return alert("Please connect your wallet");
         if (!isSupportedNetwork(chainId)) return alert("Unsupported network");
@@ -26,17 +27,43 @@ const useMintToken = () => {
         );
 
         try {
+            // Start the minting process
             const tx = await contract.mint({ value: mintPrice });
+            
+            // Wait for transaction confirmation
             const receipt = await tx.wait();
             if (receipt.status === 0) {
                 throw new Error("Transaction failed");
             }
 
+            // Find the Minted event in the receipt
+            const mintedEvent = receipt.logs
+                .map(log => {
+                    try {
+                        return contract.interface.parseLog(log);
+                    } catch (e) {
+                        return null;
+                    }
+                })
+                .find(event => event && event.name === "Minted");
+
+            if (mintedEvent) {
+                const [to, tokenId] = mintedEvent.args;
+                // Only update if the token was minted to the current user
+                if (to.toLowerCase() === address.toLowerCase()) {
+                    // Update next token ID
+                    setNextTokenId(tokenId + 1n);
+                    // Refresh owned tokens list
+                    await refreshOwnedTokens();
+                }
+            }
+
             alert("Token minted successfully");
         } catch (error) {
             console.error("error: ", error);
+            alert("Failed to mint token");
         }
-    }, [address, chainId, maxSupply, mintPrice, nextTokenId, wagmiConfig]);
+    }, [address, chainId, maxSupply, mintPrice, nextTokenId, wagmiConfig, setNextTokenId, refreshOwnedTokens]);
 };
 
 export default useMintToken;

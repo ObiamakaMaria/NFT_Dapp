@@ -3,59 +3,85 @@ import Footer from "./components/Footer";
 import { useAppContext } from "./contexts/appContext";
 import NFTCard from "./components/NFTCard";
 import useMintToken from "./hooks/useMintToken";
+import OwnedTokens from "./components/OwnedTokens";
+import { useState } from "react";
+import { Icon } from "@iconify/react/dist/iconify.js";
+import { useAccount } from "wagmi";
 
 function App() {
     const { nextTokenId, tokenMetaData, mintPrice } = useAppContext();
-
-    console.log("nextTokenId: ", nextTokenId);
-
+    const { address } = useAccount();
+    const [activeTab, setActiveTab] = useState("mint");
     const tokenMetaDataArray = Array.from(tokenMetaData.values());
     const mintToken = useMintToken();
 
     return (
-        <div>
+        <div className="min-h-screen bg-gray-50">
             <Header />
-            <main className="h-full min-h-[calc(100vh-128px)] p-4">
-                <div className="text-center">
-                    <h1 className="text-3xl font-bold">NFT dApp</h1>
-                    <p className="text-primary font-medium">
-                        Mint and manage your NFTs
+            <main className="container mx-auto px-4 py-8 min-h-[calc(100vh-128px)]">
+                <div className="text-center mb-12">
+                    <h1 className="text-4xl font-bold text-primary">
+                        NFT Collection
+                    </h1>
+                    <p className="text-gray-600 mt-2">
+                        Mint and Manage Your NFTs
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4  mt-6">
-                    <div className="border-l-2 border-primary p-4">
-                        <h1 className="text-xl font-bold">Mint NFT</h1>
-                        <p className="text-gray-500">
-                            Mint your NFT and make it available for sale
-                        </p>
-                    </div>
-                    <div className="border-l-2 border-primary p-4">
-                        <h1 className="text-xl font-bold">Manage NFTs</h1>
-                        <p className="text-gray-500">
-                            View and manage your minted NFTs
-                        </p>
-                    </div>
-                    <div className="border-l-2 border-primary p-4">
-                        <h1 className="text-xl font-bold">Marketplace</h1>
-                        <p className="text-gray-500">
-                            Buy and sell NFTs on the marketplace
-                        </p>
-                    </div>
-                </div>
+                {address ? (
+                    <>
+                        <div className="flex justify-center mb-8">
+                            <div className="inline-flex rounded-lg border border-gray-200 p-1 bg-white">
+                                <button
+                                    onClick={() => setActiveTab("mint")}
+                                    className={`px-4 py-2 rounded-md transition-all ${
+                                        activeTab === "mint"
+                                            ? "bg-primary text-white"
+                                            : "hover:bg-gray-100"
+                                    }`}
+                                >
+                                    Mint NFTs
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab("owned")}
+                                    className={`px-4 py-2 rounded-md transition-all ${
+                                        activeTab === "owned"
+                                            ? "bg-primary text-white"
+                                            : "hover:bg-gray-100"
+                                    }`}
+                                >
+                                    My NFTs
+                                </button>
+                            </div>
+                        </div>
 
-                <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
-                    {tokenMetaDataArray.map((token, i) => (
-                        <NFTCard
-                            key={token.name.split(" ").join("")}
-                            metadata={token}
-                            mintPrice={mintPrice}
-                            tokenId={i}
-                            nextTokenId={nextTokenId}
-                            mintNFT={mintToken}
-                        />
-                    ))}
-                </div>
+                        {activeTab === "mint" ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                                {tokenMetaDataArray.map((token, i) => (
+                                    <NFTCard
+                                        key={token.name.split(" ").join("")}
+                                        metadata={token}
+                                        mintPrice={mintPrice}
+                                        tokenId={i}
+                                        nextTokenId={nextTokenId}
+                                        mintNFT={mintToken}
+                                    />
+                                ))}
+                            </div>
+                        ) : (
+                            <OwnedTokens />
+                        )}
+                    </>
+                ) : (
+                    <div className="text-center py-12">
+                        <div className="bg-white rounded-lg p-8 max-w-md mx-auto shadow-lg">
+                            <h2 className="text-2xl font-bold mb-2">Connect Your Wallet</h2>
+                            <p className="text-gray-600">
+                                Please connect your wallet to start minting and managing your NFTs.
+                            </p>
+                        </div>
+                    </div>
+                )}
             </main>
             <Footer />
         </div>

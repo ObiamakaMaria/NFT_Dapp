@@ -1,7 +1,8 @@
 import { Contract } from "ethers";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { getReadOnlyProvider } from "../utils";
 import NFT_ABI from "../ABI/nft.json";
+import { useAccount } from "wagmi";
 
 const appContext = createContext();
 
@@ -10,7 +11,6 @@ export const useAppContext = () => {
     if (!context) {
         throw new Error("useAppContext must be used within an AppProvider");
     }
-
     return context;
 };
 
@@ -20,6 +20,36 @@ export const AppProvider = ({ children }) => {
     const [baseTokenURI, setBaseTokenURI] = useState("");
     const [tokenMetaData, setTokenMetaData] = useState(new Map());
     const [mintPrice, setMintPrice] = useState(null);
+    const [ownedTokens, setOwnedTokens] = useState([]);
+    const { address } = useAccount();
+
+    const refreshOwnedTokens = useCallback(async () => {
+        if (!address || !maxSupply) return;
+        
+        const contract = new Contract(
+            import.meta.env.VITE_NFT_CONTRACT_ADDRESS,
+            NFT_ABI,
+            getReadOnlyProvider()
+        );
+
+        try {
+            const owned = [];
+            for (let i = 0; i < Number(maxSupply); i++) {
+                try {
+                    const owner = await contract.ownerOf(i);
+                    if (owner.toLowerCase() === address.toLowerCase()) {
+                        owned.push(i);
+                    }
+                } catch (e) {
+                    // Skip if token doesn't exist yet
+                    continue;
+                }
+            }
+            setOwnedTokens(owned);
+        } catch (error) {
+            console.error("Error fetching owned tokens:", error);
+        }
+    }, [address, maxSupply]);
 
     useEffect(() => {
         const contract = new Contract(
@@ -27,6 +57,7 @@ export const AppProvider = ({ children }) => {
             NFT_ABI,
             getReadOnlyProvider()
         );
+
         contract
             .nextTokenId()
             .then((id) => setNextTokenId(id))
@@ -50,8 +81,6 @@ export const AppProvider = ({ children }) => {
 
     useEffect(() => {
         if (!maxSupply || !baseTokenURI) return;
-        // const tokenIds = Array.from({ length: Number(maxSupply) }, (_, i) => i);
-
         const tokenIds = [];
         for (let i = 0; i < maxSupply; i++) {
             tokenIds.push(i);
@@ -76,14 +105,23 @@ export const AppProvider = ({ children }) => {
             .catch((error) => console.error("error: ", error));
     }, [baseTokenURI, maxSupply]);
 
+    // Fetch owned tokens when address changes
+    useEffect(() => {
+        refreshOwnedTokens();
+    }, [address, maxSupply, refreshOwnedTokens]);
+
     return (
         <appContext.Provider
             value={{
                 nextTokenId,
+                setNextTokenId,
                 maxSupply,
                 baseTokenURI,
                 tokenMetaData,
                 mintPrice,
+                ownedTokens,
+                setOwnedTokens,
+                refreshOwnedTokens
             }}
         >
             {children}
