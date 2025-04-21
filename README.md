@@ -23,7 +23,8 @@ This decentralized application (dApp) allows users to mint, view, and transfer N
 Radix UI Themes v3.2.1 for accessible UI components
 Iconify v5.2.0 for high-quality icons
 
-## Deployment : Project was delployed on Vercel : https://nft-dapp-x9h5.vercel.app/
+## Deployment 
+Project was delployed on Vercel : https://nft-dapp-x9h5.vercel.app/
 
 ## Prerequisites
 
