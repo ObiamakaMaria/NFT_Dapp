@@ -18,7 +18,7 @@ const Footer = () => {
                     role="img"
                     aria-label="logo"
                 >
-                    &copy; 2025 cohort XII
+                    &copy; developed by Obiamaka
                 </Text>
             </Box>
         </Flex>
